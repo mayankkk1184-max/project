@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-1: #0D071E;
+    --bg-2: #150B2D;
+    --magenta: #E024A3;
+    --violet: #A855F7;
+    --gold-cream: #FCD34D;
+    --cream: #FFFBEB;
+    --gold: #DFB960;
+    --radius: 0.75rem;
+  }
+
+  html, body {
+    background-color: var(--bg-1);
+    color: #FFFBEB;
+    min-height: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 12% 18%, rgba(168, 85, 247, 0.22), transparent 42%),
+      radial-gradient(circle at 86% 12%, rgba(224, 36, 163, 0.18), transparent 46%),
+      radial-gradient(circle at 50% 92%, rgba(252, 211, 77, 0.10), transparent 50%),
+      linear-gradient(180deg, #0D071E 0%, #150B2D 60%, #0D071E 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-xl bg-slate-900/60 border border-pink-500/30;
+    box-shadow: 0 0 30px rgba(224, 36, 163, 0.2);
+  }
+  .glass-gold {
+    @apply backdrop-blur-xl bg-slate-900/50 border border-amber-400/40;
+    box-shadow: 0 0 30px rgba(252, 211, 77, 0.18);
+  }
+  .glass-violet {
+    @apply backdrop-blur-xl bg-slate-900/50 border border-violet-400/40;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.22);
+  }
+  .gold-text {
+    color: #DFB960;
+  }
+  .glow-magenta {
+    text-shadow: 0 0 14px rgba(224, 36, 163, 0.65), 0 0 4px rgba(224, 36, 163, 0.9);
+  }
+  .glow-gold {
+    text-shadow: 0 0 14px rgba(252, 211, 77, 0.55), 0 0 4px rgba(223, 185, 96, 0.9);
+  }
+  .script {
+    font-family: var(--font-script), cursive;
+  }
+  .display {
+    font-family: var(--font-display), serif;
+  }
+}
+
+@layer utilities {
+  .tilt-hover {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-style: preserve-3d;
+  }
+  .tilt-hover:hover {
+    transform: perspective(900px) rotateX(6deg) rotateY(-6deg) translateY(-6px);
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
