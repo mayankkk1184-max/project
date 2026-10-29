@@ -15,46 +15,46 @@ interface Memory {
 
 const MemoryList: Memory[] = [
   {
-    url: '/project/pic1.jpeg',
+    url: '/pic1.jpeg',
     alt: 'Silhouetted couple at sunset',
     caption: 'That sunset we chased until the sky melted gold — my favorite place is next to you.',
     song: 'Golden Hour — our song',
-    audioUrl: '/project/picmusic1.mp3',
+    audioUrl: '/picmusic1.mp3',
   },
   {
-    url: '/project/pic2.jpeg',
+    url: '/pic2.jpeg',
     alt: 'Romantic silhouette at sunset',
     caption: 'The evening you whispered forever, and the whole world went quiet to listen.',
     song: 'A Thousand Years',
-    audioUrl: '/project/picmusic2.mp3',
+    audioUrl: '/picmusic2.mp3',
   },
   {
-    url: '/project/pic3.jpeg',
+    url: '/pic3.jpeg',
     alt: 'Couple dancing at sunset',
     caption: 'Two left feet between us and the most perfect dance I have ever had.',
     song: 'Perfect — Ed Sheeran',
-    audioUrl: '/project/picmusic3.mp3',
+    audioUrl: '/picmusic3.mp3',
   },
   {
-    url: '/project/pic4.jpeg',
+    url: '/pic4.jpeg',
     alt: 'Couple on the beach at sunset',
     caption: 'Salt in our hair, sand in our shoes, and not a single care in the world.',
     song: 'Beyond the Sea',
-    audioUrl: '/project/picmusic4.mp3',
+    audioUrl: '/picmusic4.mp3',
   },
   {
-    url: '/project/pic5.jpeg',
+    url: '/pic5.jpeg',
     alt: 'Couple embracing in sunlit field',
     caption: 'A field of tall grass and you in the middle of it — that was the whole world.',
     song: 'Yellow — Coldplay',
-    audioUrl: '/project/picmusic5.mp3',
+    audioUrl: '/picmusic5.mp3',
   },
   {
-    url: '/project/pic6.jpeg',
+    url: '/pic6.jpeg',
     alt: 'Couple in a grassy field at sunset',
     caption: 'Even the simplest afternoon felt like a chapter worth re-reading forever.',
     song: 'Here Comes the Sun',
-    audioUrl: '/project/picmusic6.mp3',
+    audioUrl: '/picmusic6.mp3',
   },
 ];
 
