@@ -13,7 +13,7 @@ interface Memory {
   audioUrl?: string;
 }
 
-const memoryList = [
+const MemoryList: Memory[] = [
   {
     url: '/project/pic1.jpeg',
     alt: 'Silhouetted couple at sunset',
@@ -114,9 +114,9 @@ export default function MemoryGallery() {
     setActive(i);
 
     // Play specific song if available
-    if (memoryList[i].audioUrl) {
+    if (MemoryList[i].audioUrl) {
       if (currentAudio) currentAudio.pause();
-      const audio = new Audio(memoryList[i].audioUrl);
+      const audio = new Audio(MemoryList[i].audioUrl);
       audio.volume = 0.5;
       audio.play().catch((err) => console.log('Audio autoplay blocked:', err));
       setCurrentAudio(audio);
@@ -138,7 +138,7 @@ export default function MemoryGallery() {
       <div className="mx-auto max-w-6xl">
         <SectionTitle eyebrow="Chapter One" title="Our Memory Gallery" sub="tap a frame to step inside the moment" />
         <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6">
-          {memoryList.map((m, i) => (
+          {MemoryList.map((m, i) => (
             <TiltCard key={i} memory={m} onOpen={() => open(i)} />
           ))}
         </div>
@@ -158,15 +158,15 @@ export default function MemoryGallery() {
               <X className="h-5 w-5" />
             </button>
             <img
-              src={memoryList[active].url}
-              alt={memoryList[active].alt}
+              src={MemoryList[active].url}
+              alt={MemoryList[active].alt}
               className="max-h-[60vh] w-full object-cover"
             />
             <div className="p-6">
               <div className="mb-2 inline-flex items-center gap-2 rounded-full glass-gold px-3 py-1 text-xs text-amber-200">
-                <Music2 className="h-3 w-3" /> {memoryList[active].song}
+                <Music2 className="h-3 w-3" /> {MemoryList[active].song}
               </div>
-              <p className="script text-2xl text-amber-100">{memoryList[active].caption}</p>
+              <p className="script text-2xl text-amber-100">{MemoryList[active].caption}</p>
             </div>
           </motion.div>
         </div>
