@@ -71,7 +71,7 @@ export default function SiteLock({ children, password = 'love' }: SiteLockProps)
 
           {error && (
             <p className="text-xs text-rose-400 animate-pulse">
-              Oops! That's not our secret word. Try again! ❤️
+              Oops! That is not our secret word. Try again! ❤️
             </p>
           )}
 

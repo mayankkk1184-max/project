@@ -22,7 +22,7 @@ export default function VinylPlayer() {
 
   useEffect(() => {
     // Initialize audio element pointing to your public folder file
-    audioRef.current = new Audio('/vn.mpeg'); // Change filename to your actual mp3 file name
+    audioRef.current = new Audio('/project/vn.mpeg'); // Change filename to your actual mp3 file name
 
     const audio = audioRef.current;
 

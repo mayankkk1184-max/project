@@ -13,48 +13,48 @@ interface Memory {
   audioUrl?: string;
 }
 
-const MEMORIES: Memory[] = [
+const memoryList = [
   {
-    url: '/pic1.jpeg',
+    url: '/project/pic1.jpeg',
     alt: 'Silhouetted couple at sunset',
     caption: 'That sunset we chased until the sky melted gold — my favorite place is next to you.',
     song: 'Golden Hour — our song',
-    audioUrl: '/picmusic1.mp3', // Make sure this file is in your public folder!
+    audioUrl: '/project/picmusic1.mp3',
   },
   {
-    url: '/pic2.jpeg',
+    url: '/project/pic2.jpeg',
     alt: 'Romantic silhouette at sunset',
     caption: 'The evening you whispered forever, and the whole world went quiet to listen.',
     song: 'A Thousand Years',
-    audioUrl: '/picmusic2.mp3',
+    audioUrl: '/project/picmusic2.mp3',
   },
   {
-    url: '/pic3.jpeg',
+    url: '/project/pic3.jpeg',
     alt: 'Couple dancing at sunset',
     caption: 'Two left feet between us and the most perfect dance I have ever had.',
     song: 'Perfect — Ed Sheeran',
-    audioUrl: '/picmusic3.mp3',
+    audioUrl: '/project/picmusic3.mp3',
   },
   {
-    url: '/pic4.jpeg',
+    url: '/project/pic4.jpeg',
     alt: 'Couple on the beach at sunset',
     caption: 'Salt in our hair, sand in our shoes, and not a single care in the world.',
     song: 'Beyond the Sea',
-    audioUrl: '/picmusic4.mp3',
+    audioUrl: '/project/picmusic4.mp3',
   },
   {
-    url: '/pic5.jpeg',
+    url: '/project/pic5.jpeg',
     alt: 'Couple embracing in sunlit field',
     caption: 'A field of tall grass and you in the middle of it — that was the whole world.',
     song: 'Yellow — Coldplay',
-    audioUrl: '/picmusic5.mp3',
+    audioUrl: '/project/picmusic5.mp3',
   },
   {
-    url: '/pic6.jpeg',
+    url: '/project/pic6.jpeg',
     alt: 'Couple in a grassy field at sunset',
     caption: 'Even the simplest afternoon felt like a chapter worth re-reading forever.',
     song: 'Here Comes the Sun',
-    audioUrl: '/picmusic6.mp3',
+    audioUrl: '/project/picmusic6.mp3',
   },
 ];
 
@@ -114,9 +114,9 @@ export default function MemoryGallery() {
     setActive(i);
 
     // Play specific song if available
-    if (MEMORIES[i].audioUrl) {
+    if (memoryList[i].audioUrl) {
       if (currentAudio) currentAudio.pause();
-      const audio = new Audio(MEMORIES[i].audioUrl);
+      const audio = new Audio(memoryList[i].audioUrl);
       audio.volume = 0.5;
       audio.play().catch((err) => console.log('Audio autoplay blocked:', err));
       setCurrentAudio(audio);
@@ -138,7 +138,7 @@ export default function MemoryGallery() {
       <div className="mx-auto max-w-6xl">
         <SectionTitle eyebrow="Chapter One" title="Our Memory Gallery" sub="tap a frame to step inside the moment" />
         <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6">
-          {MEMORIES.map((m, i) => (
+          {memoryList.map((m, i) => (
             <TiltCard key={i} memory={m} onOpen={() => open(i)} />
           ))}
         </div>
@@ -158,15 +158,15 @@ export default function MemoryGallery() {
               <X className="h-5 w-5" />
             </button>
             <img
-              src={MEMORIES[active].url}
-              alt={MEMORIES[active].alt}
+              src={memoryList[active].url}
+              alt={memoryList[active].alt}
               className="max-h-[60vh] w-full object-cover"
             />
             <div className="p-6">
               <div className="mb-2 inline-flex items-center gap-2 rounded-full glass-gold px-3 py-1 text-xs text-amber-200">
-                <Music2 className="h-3 w-3" /> {MEMORIES[active].song}
+                <Music2 className="h-3 w-3" /> {memoryList[active].song}
               </div>
-              <p className="script text-2xl text-amber-100">{MEMORIES[active].caption}</p>
+              <p className="script text-2xl text-amber-100">{memoryList[active].caption}</p>
             </div>
           </motion.div>
         </div>
