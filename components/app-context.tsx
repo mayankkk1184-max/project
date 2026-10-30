@@ -12,9 +12,12 @@ import { getAudioEngine } from '@/lib/audio';
 
 interface AppState {
   started: boolean;
+  muted: boolean;
   beginExperience: () => void;
   duckBgm: () => void;
   unduckBgm: () => void;
+  setMuted: (muted: boolean) => void;
+  toggleMute: () => void;
   sfx: (name: SfxName) => void;
 }
 
@@ -35,6 +38,7 @@ const Ctx = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [started, setStarted] = useState(false);
+  const [muted, setMutedState] = useState(false);
   const audio = useRef(getAudioEngine());
 
   const beginExperience = useCallback(() => {
@@ -46,6 +50,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const duckBgm = useCallback(() => audio.current.duckBgm(), []);
   const unduckBgm = useCallback(() => audio.current.unduckBgm(), []);
+
+  // One shared mute switch: stops ALL background music completely
+  const setMuted = useCallback((value: boolean) => {
+    audio.current.setMuted(value);
+    setMutedState(value);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const next = !audio.current.getMuted();
+    audio.current.setMuted(next);
+    setMutedState(next);
+  }, []);
+
   const sfx = useCallback((name: SfxName) => {
     audio.current.init();
     audio.current.resume();
@@ -66,7 +83,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ started, beginExperience, duckBgm, unduckBgm, sfx }}
+      value={{
+        started,
+        muted,
+        beginExperience,
+        duckBgm,
+        unduckBgm,
+        setMuted,
+        toggleMute,
+        sfx,
+      }}
     >
       {children}
     </Ctx.Provider>

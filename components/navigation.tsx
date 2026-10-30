@@ -70,29 +70,25 @@ export function TopNav() {
 }
 
 export function BottomMusicBar() {
-  const { started, sfx, duckBgm, unduckBgm } = useApp();
-  const [muted, setMuted] = useState(false);
+  // `muted` and `toggleMute` come from the shared app-context, so the real
+  // background music is fully stopped when muted (not just made quieter)
+  const { started, sfx, muted, toggleMute } = useApp();
 
   if (!started) return null;
 
   const toggle = () => {
-    setMuted((m) => {
-      const next = !m;
-      sfx('click');
-      if (next) duckBgm();
-      else unduckBgm();
-      return next;
-    });
+    sfx('click');
+    toggleMute();
   };
 
   return (
     <div className="fixed bottom-0 z-40 w-full">
       <div className="glass mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-t-2xl px-4 py-3">
         <div className="flex items-center gap-2 text-amber-200">
-          <Music2 className="h-4 w-4 animate-pulse" />
+          <Music2 className={`h-4 w-4 ${muted ? '' : 'animate-pulse'}`} />
           <div className="text-xs">
             <div className="font-medium">Ambient Love</div>
-            <div className="text-amber-100/50">Now Playing</div>
+            <div className="text-amber-100/50">{muted ? 'Muted' : 'Now Playing'}</div>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
