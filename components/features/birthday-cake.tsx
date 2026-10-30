@@ -6,7 +6,6 @@ import { Cake, Mic, MicOff } from 'lucide-react';
 import { useApp } from '@/components/app-context';
 import { SectionTitle } from '@/components/features/memory-gallery';
 import { fireGoldConfetti } from '@/lib/confetti';
-import { getAudioEngine } from '@/lib/audio';
 
 const CANDLE_COUNT = 5;
 
@@ -24,9 +23,15 @@ export default function BirthdayCake() {
   const rafRef = useRef<number>(0);
   const blowDetectedRef = useRef(false);
   const blowStartRef = useRef<number>(0);
+  const litRef = useRef(true);
+
+  // Keep a ref in sync so the listening loop always knows if candles are lit
+  useEffect(() => {
+    litRef.current = lit;
+  }, [lit]);
 
   const extinguish = () => {
-    if (!lit) return;
+    if (!litRef.current) return;
     sfx('candleBlow');
     setLit(false);
     setSmoke(true);
@@ -42,24 +47,53 @@ export default function BirthdayCake() {
       return;
     }
     setMicError(null);
+
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setMicError('This browser cannot use the microphone here. Use the button to blow out candles.');
+      return;
+    }
+
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      const name = (err as DOMException)?.name;
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setMicError('Microphone access denied. Allow it in the browser address bar, or use the button to blow out candles.');
+      } else if (name === 'NotFoundError') {
+        setMicError('No microphone was found on this device. Use the button to blow out candles.');
+      } else {
+        setMicError('Could not start the microphone. Use the button to blow out candles.');
+      }
+      return;
+    }
+
+    try {
       streamRef.current = stream;
-      const engine = getAudioEngine();
-      engine.init();
-      const ctx = engine.context;
-      const source = ctx!.createMediaStreamSource(stream);
-      const analyser = ctx!.createAnalyser();
+
+      // Create our own audio context so this does not depend on any other file
+      const Ctor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctor();
+      if (ctx.state === 'suspended') await ctx.resume();
+
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.5;
       source.connect(analyser);
+
       analyserRef.current = analyser;
       audioCtxRef.current = ctx;
-      setMicActive(true);
       blowDetectedRef.current = false;
-      detectBlow();
-    } catch {
-      setMicError('Microphone access denied. Use the button to blow out candles.');
+      blowStartRef.current = 0;
+      setMicActive(true);
+    } catch (err) {
+      console.log('Mic setup failed:', err);
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      setMicError('The microphone started but listening failed. Use the button to blow out candles.');
     }
   };
 
@@ -69,24 +103,42 @@ export default function BirthdayCake() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
     analyserRef.current = null;
     setMicActive(false);
     setVolume(0);
+    setBlowProgress(0);
   };
 
   const detectBlow = () => {
     const analyser = analyserRef.current;
-    if (!analyser || !lit) {
-      if (lit) rafRef.current = requestAnimationFrame(detectBlow);
+    if (!analyser) return;
+
+    if (!litRef.current) {
+      // candles are out, keep the loop alive so it resumes when they relight
+      rafRef.current = requestAnimationFrame(detectBlow);
       return;
     }
+
     const data = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(data);
     // peak amplitude across frequency bins
-    const peak = Math.max(...Array.from(data));
-    // variance across the spectrum — distinguishes wind noise from steady background
-    const mean = data.reduce((a, b) => a + b, 0) / data.length;
-    const variance = data.reduce((a, b) => a + (b - mean) ** 2, 0) / data.length;
+    let peak = 0;
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] > peak) peak = data[i];
+      sum += data[i];
+    }
+    // variance across the spectrum, distinguishes wind noise from steady background
+    const mean = sum / data.length;
+    let varSum = 0;
+    for (let i = 0; i < data.length; i++) {
+      varSum += (data[i] - mean) ** 2;
+    }
+    const variance = varSum / data.length;
     const normalized = Math.min(1, peak / 255);
     setVolume(normalized);
 
@@ -105,9 +157,12 @@ export default function BirthdayCake() {
       setBlowProgress(Math.min(1, held / HOLD_MS));
       if (held >= HOLD_MS) {
         blowDetectedRef.current = true;
+        blowStartRef.current = 0;
         setBlowProgress(0);
         extinguish();
-        setTimeout(() => { blowDetectedRef.current = false; }, 7000);
+        setTimeout(() => {
+          blowDetectedRef.current = false;
+        }, 7000);
       }
     } else if (!isBlowing) {
       blowStartRef.current = 0;
@@ -117,15 +172,22 @@ export default function BirthdayCake() {
     rafRef.current = requestAnimationFrame(detectBlow);
   };
 
+  // Clean up when leaving the page
   useEffect(() => {
     return () => stopMic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Start the listening loop once the microphone is active
   useEffect(() => {
-    if (!micActive || !lit) return;
+    if (!micActive) return;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(detectBlow);
-  }, [micActive, lit]);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [micActive]);
 
   const volPct = Math.round(volume * 100);
   const holdPct = Math.round(blowProgress * 100);
