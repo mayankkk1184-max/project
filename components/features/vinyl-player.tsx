@@ -32,7 +32,7 @@ export default function VinylPlayer() {
   }, [unduckBgm]);
 
   useEffect(() => {
-    const audio = new Audio(getAssetPath(VOICE_NOTE_FILE));
+    const audio = new Audio(VOICE_NOTE_FILE);
     audio.preload = 'auto';
     audioRef.current = audio;
 
