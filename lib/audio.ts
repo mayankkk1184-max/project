@@ -1,4 +1,4 @@
-// BGM using custom audio file from /public/bgm
+// BGM using custom audio file from /public
 
 class AudioEngine {
   private bgmAudio: HTMLAudioElement | null = null;
@@ -7,10 +7,17 @@ class AudioEngine {
   private baseVolume: number = 0.3; // 30% volume default
   private readonly duckedVolume: number = 0.05;
 
+  // If the first path fails to load, the next one is tried automatically
+  private readonly sources: string[] = ['/project/bgm.mp3', '/bgm.mp3'];
+  private sourceIndex: number = 0;
+
   constructor() {
     if (typeof window !== 'undefined') {
-      this.bgmAudio = new Audio('/project/bgm.mp3');
-      this.bgmAudio.loop = true;
+      const audio = new Audio(this.sources[0]);
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.addEventListener('error', () => this.tryNextSource());
+      this.bgmAudio = audio;
       this.applyVolume();
     }
   }
@@ -23,14 +30,36 @@ class AudioEngine {
   init() {}
   resume() {}
 
+  private isSilent() {
+    return this.isMuted || this.baseVolume <= 0;
+  }
+
+  private tryNextSource() {
+    const audio = this.bgmAudio;
+    if (!audio) return;
+    console.log('Background music failed to load:', audio.src);
+    if (this.sourceIndex < this.sources.length - 1) {
+      this.sourceIndex += 1;
+      audio.src = this.sources[this.sourceIndex];
+      audio.load();
+      this.playSafely();
+    }
+  }
+
+  private playSafely() {
+    const audio = this.bgmAudio;
+    if (!audio || this.isSilent()) return;
+    audio.play().catch((err) => {
+      console.log('Background music could not play:', err);
+    });
+  }
+
   // Single place that decides what the music does, so mute is ALWAYS respected
   private applyVolume() {
     const audio = this.bgmAudio;
     if (!audio) return;
 
-    const silent = this.isMuted || this.baseVolume <= 0;
-
-    if (silent) {
+    if (this.isSilent()) {
       audio.muted = true;
       audio.volume = 0;
       audio.pause(); // stopped completely, no sound at all
@@ -42,24 +71,19 @@ class AudioEngine {
     }
   }
 
-  private isSilent() {
-    return this.isMuted || this.baseVolume <= 0;
-  }
-
   startBgm() {
-    if (this.bgmAudio && !this.isSilent()) {
-      this.bgmAudio.play().catch((err) => {
-        console.log('Autoplay waiting for user interaction:', err);
-      });
-    }
+    this.playSafely();
   }
 
-  // ----- Mute controls (use whichever name your app-context calls) -----
+  // ----- Mute controls -----
   setMuted(muted: boolean) {
     this.isMuted = muted;
     this.applyVolume();
-    if (!this.isSilent() && this.bgmAudio && this.bgmAudio.paused) {
-      this.bgmAudio.play().catch(() => {});
+    if (!muted) {
+      const audio = this.bgmAudio;
+      // If the file is in a failed state, reload it before playing
+      if (audio && audio.error) audio.load();
+      this.playSafely();
     }
   }
 
@@ -86,13 +110,11 @@ class AudioEngine {
     this.baseVolume = Math.max(0, Math.min(1, v));
     if (this.baseVolume <= 0) {
       this.isMuted = true;
-    } else if (this.isMuted && v > 0) {
+    } else if (this.isMuted) {
       this.isMuted = false;
     }
     this.applyVolume();
-    if (!this.isSilent() && this.bgmAudio && this.bgmAudio.paused) {
-      this.bgmAudio.play().catch(() => {});
-    }
+    this.playSafely();
   }
 
   duckBgm() {
