@@ -5,6 +5,10 @@ import { motion } from 'framer-motion';
 import { Play, Pause, Volume2 } from 'lucide-react';
 import { useApp } from '@/components/app-context';
 import { SectionTitle } from '@/components/features/memory-gallery';
+import { getAssetPath } from '@/lib/utils';
+
+// ✏️ Must match the real file name inside your public folder (capital letters matter!)
+const VOICE_NOTE_FILE = '/vn.mp3';
 
 const TRANSCRIPT = [
   { t: '00:00', text: 'Hey you. If you are reading this, it is your birthday, and I am, as always, the luckiest.' },
@@ -18,33 +22,49 @@ export default function VinylPlayer() {
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(17);
+  const [loadFailed, setLoadFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Keep the latest unduckBgm in a ref so the audio is NOT recreated when it changes
+  const unduckRef = useRef(unduckBgm);
   useEffect(() => {
-    // Initialize audio element pointing to your public folder file
-    audioRef.current = new Audio('/project/vn.mpeg'); // Change filename to your actual mp3 file name
+    unduckRef.current = unduckBgm;
+  }, [unduckBgm]);
 
-    const audio = audioRef.current;
+  useEffect(() => {
+    const audio = new Audio(getAssetPath(VOICE_NOTE_FILE));
+    audio.preload = 'auto';
+    audioRef.current = audio;
 
-    audio.addEventListener('loadedmetadata', () => {
-      if (audio.duration) setDuration(audio.duration);
-    });
-
-    audio.addEventListener('timeupdate', () => {
-      setTime(audio.currentTime);
-    });
-
-    audio.addEventListener('ended', () => {
+    const onMeta = () => {
+      if (audio.duration && isFinite(audio.duration)) setDuration(audio.duration);
+    };
+    const onTime = () => setTime(audio.currentTime);
+    const onEnd = () => {
       setPlaying(false);
-      unduckBgm();
+      unduckRef.current();
       setTime(0);
-    });
+    };
+    const onError = () => {
+      console.log('Voice note failed to load:', audio.src);
+      setLoadFailed(true);
+      setPlaying(false);
+    };
+
+    audio.addEventListener('loadedmetadata', onMeta);
+    audio.addEventListener('timeupdate', onTime);
+    audio.addEventListener('ended', onEnd);
+    audio.addEventListener('error', onError);
 
     return () => {
       audio.pause();
-      unduckBgm();
+      audio.removeEventListener('loadedmetadata', onMeta);
+      audio.removeEventListener('timeupdate', onTime);
+      audio.removeEventListener('ended', onEnd);
+      audio.removeEventListener('error', onError);
+      unduckRef.current();
     };
-  }, [unduckBgm]);
+  }, []);
 
   const toggle = () => {
     sfx('click');
@@ -56,9 +76,13 @@ export default function VinylPlayer() {
       setPlaying(false);
       unduckBgm();
     } else {
-      audio.play().catch((err) => console.log('Autoplay prevented:', err));
       setPlaying(true);
       duckBgm();
+      audio.play().catch((err) => {
+        console.log('Could not play voice note:', err);
+        setPlaying(false);
+        unduckBgm();
+      });
     }
   };
 
@@ -67,6 +91,8 @@ export default function VinylPlayer() {
     const sec = Math.floor(s % 60);
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
+
+  const progress = duration > 0 ? Math.min((time / duration) * 100, 100) : 0;
 
   return (
     <section id="vinyl" className="px-4 py-28 sm:px-6 md:py-36">
@@ -110,6 +136,7 @@ export default function VinylPlayer() {
               <div className="mx-auto mb-3 flex items-center gap-3">
                 <button
                   onClick={toggle}
+                  aria-label={playing ? 'Pause voice note' : 'Play voice note'}
                   className="rounded-full bg-gradient-to-r from-pink-600 to-violet-600 p-4 text-white shadow-[0_0_20px_rgba(224,36,163,0.5)] transition hover:scale-105"
                 >
                   {playing ? <Pause className="h-5 w-5 fill-white" /> : <Play className="h-5 w-5 fill-white" />}
@@ -118,11 +145,20 @@ export default function VinylPlayer() {
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/40">
                   <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-pink-500 to-amber-300"
-                    animate={{ width: `${(time / duration) * 100}%` }}
+                    animate={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs tabular-nums text-amber-200/70">{fmt(time)} / {fmt(duration)}</span>
+                <span className="text-xs tabular-nums text-amber-200/70">
+                  {fmt(time)} / {fmt(duration)}
+                </span>
               </div>
+
+              {loadFailed && (
+                <p className="mb-2 text-xs text-rose-300">
+                  The voice note file could not be found. Check its name inside the public folder.
+                </p>
+              )}
+
               <div className="mt-4 max-h-32 space-y-2 overflow-y-auto scrollbar-hide text-sm">
                 {TRANSCRIPT.map((line, i) => {
                   const active = time >= i * 4 && time < (i + 1) * 4;
